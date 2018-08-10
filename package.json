@@ -1,0 +1,22 @@
+{
+  "name": "pursecoin",
+  "version": "1.0.0",
+  "description": "Cryto currency",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/axassin/pursecoin.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/axassin/pursecoin/issues"
+  },
+  "homepage": "https://github.com/axassin/pursecoin#readme",
+  "dependencies": {
+    "axios": "^0.18.0"
+  }
+}
