@@ -1,6 +1,12 @@
 
 const axios = require('axios')
 const CryptoJS = require('crypto-js')
+const Parallel = require('paralleljs')
+
+// processName = process.env.NAME || 'noname'
+// let x = 1
+// var p = new Parallel(x)
+// console.log(p.data)
 
 server = axios.create({
   baseURL: 'https://stormy-everglades-34766.herokuapp.com/',
@@ -18,17 +24,21 @@ const calculateHash = (index, previousHash, timestamp, data, nonce) => {
 };
 
 const mineBlock = () => {
+  isMining = true
   let time = new Date().getTime() / 1000
   console.log(new Date(time))
+
   server.get(`/mining/get-mining-job/${address}`).then(response => {
     let transactions = response.data
+    console.log(transactions)
+    console.log("WEW")
     let { index, difficulty, blockDataHash } = transactions
     let nextIndex = index + 1
     // difficulty = 5
     let nonce = 700000
     let nextTimestamp = new Date().getTime() / 1000
     let nextHash = calculateHash(nextIndex, blockDataHash, nextTimestamp, transactions, nonce)
-    console.log(nextTimestamp)
+
     while(nextHash.substring(0, difficulty) !== Array(difficulty + 1).join('0')) {
       nonce++
       nextTimestamp = new Date().getTime() / 1000
@@ -49,15 +59,19 @@ const mineBlock = () => {
 
     server.post('/mining/submit-mined-block', minedBlock).then(respose => {
       console.log(respose.data)
+      mineBlock()
     }).catch(err => {
       console.log(err)
+      mineBlock()
     })
 
    console.log("Stopped")
   })
 }
 
+
 mineBlock()
+
 
 // { 
 //   index: 7,
