@@ -14,39 +14,41 @@ server = axios.create({
 const address = 'pursecoin'
 
 const calculateHash = (index, previousHash, timestamp, data, nonce) => {
-  return CryptoJS.SHA256(index + previousHash + timestamp + data + nonce).toString();
+  return CryptoJS.SHA256(`${previousHash}|${timestamp}|${nonce}`).toString();
 };
 
 const mineBlock = () => {
+  let time = new Date().getTime() / 1000
+  console.log(new Date(time))
   server.get(`/mining/get-mining-job/${address}`).then(response => {
     let transactions = response.data
     let { index, difficulty, blockDataHash } = transactions
-    index += 1
+    let nextIndex = index + 1
     // difficulty = 5
-    let nonce = 0
+    let nonce = 700000
     let nextTimestamp = new Date().getTime() / 1000
-    let nextHash = calculateHash(index, blockDataHash, nextTimestamp, transactions, nonce)
-    
+    let nextHash = calculateHash(nextIndex, blockDataHash, nextTimestamp, transactions, nonce)
+    console.log(nextTimestamp)
     while(nextHash.substring(0, difficulty) !== Array(difficulty + 1).join('0')) {
       nonce++
       nextTimestamp = new Date().getTime() / 1000
-      nextHash = calculateHash(index, blockDataHash, nextTimestamp, transactions, nonce)
+      nextHash = calculateHash(nextIndex, blockDataHash, nextTimestamp, transactions, nonce)
       console.log({
         nonce,
         nextHash
       })
     }
 
+
     minedBlock = {
       nonce,
-      nextTimestamp,
+      dateCreated: new Date(nextTimestamp),
       blockDataHash,
-      nextHash
+      blockHash:nextHash
     }
 
     server.post('/mining/submit-mined-block', minedBlock).then(respose => {
       console.log(respose.data)
-
     }).catch(err => {
       console.log(err)
     })
