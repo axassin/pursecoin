@@ -3,7 +3,7 @@ const uuid = require('uuid/v1')
 
 
 function Blockchain() {
-  this.currentNode = `http://localhost:${parseInt(process.env.PORT)}`
+  this.currentNode = `http://${process.env.ADDRESS || 'localhost'}:${parseInt(process.env.PORT)}`
   this.nodes = []
   this.pendingTransactions =  []
 }

@@ -4,7 +4,8 @@ const axios = require('axios')
 const bodyParser = require('body-parser')
 
 const port = parseInt(process.env.PORT)
-const host = `http://localhost:${port}/`
+const address = process.env.ADDRESS
+const host = `http://${address}:${port}/`
 
 const PurseCoin = new BlockChain()
 
@@ -34,12 +35,15 @@ const initServer = () => {
     })
   })
 
+
   app.post('/transaction/broadcast', (req, res) => {
     
     const {sender, recipient, value} = req.body
     const transaction = PurseCoin.createNewTransaction(sender,recipient, value)
     PurseCoin.addToPendingTransaction(transaction)
-    console.log(PurseCoin.pendingTransactions)
+
+    console.log("this is my pending transactions: ",PurseCoin.pendingTransactions)
+
     let broadcastTransactionPromise = []
 
     PurseCoin.nodes.map(node => {
@@ -58,18 +62,10 @@ const initServer = () => {
         error: "Fail to broadcast transaction"
       })
     })
+
   })
 
-  app.post('/transaction/init', (req, res) => {
-    const { pendingTransactions } = req.body
-    PurseCoin.pendingTransactions = pendingTransactions
-    console.log(PurseCoin.pendingTransactions)
-    res.send({
-      message: 'Transactions has been initialized'
-    })
-  })
-
-  app.post('/network/brodcast', (req, res) => {
+  app.post('/network/broadcast', (req, res) => {
 
     const newNode = req.body.newNode
 
@@ -92,15 +88,11 @@ const initServer = () => {
 
         const url = `${newNode}/network/bulk`
         const nodes = [...PurseCoin.nodes, PurseCoin.currentNode]
-
-        return axios.post(url, {nodes})
-
-      }).then(response => {
-
-        const url = `${newNode}/transaction/init`
         const pendingTransactions = PurseCoin.pendingTransactions
 
-        return axios.post(url, {pendingTransactions})
+        return axios.post(url, {nodes, pendingTransactions})
+
+      }).then(response => {
         console.log('sucess bulking nodes')
       }).then(response => {
         console.log("Done brodcasting transactions to new node")
@@ -133,9 +125,12 @@ const initServer = () => {
   })
 
   app.post('/network/bulk', (req, res) => {
-    const nodes = req.body.nodes
+    const {nodes, pendingTransactions} = req.body
     PurseCoin.nodes = [...PurseCoin.nodes, ...nodes].filter(node => node !== PurseCoin.currentNode)
-    console.log(PurseCoin.nodes)
+    PurseCoin.pendingTransactions = pendingTransactions
+    console.log("pending: "+pendingTransactions)
+    console.log("CURRENT NODES: ", PurseCoin.nodes)
+    console.log("PENDING TRANSACTIONS: ", PurseCoin.pendingTransactions)
     res.send({
       message:  'Decentralized node'
     })
