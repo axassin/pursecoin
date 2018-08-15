@@ -1,70 +1,4 @@
-const BlockChain = require('./blockchain')
-const express = require('express')
-const axios = require('axios')
-const bodyParser = require('body-parser')
-
-const port = parseInt(process.env.PORT)
-const address = process.env.ADDRESS
-const host = `http://${address}:${port}/`
-
-const PurseCoin = new BlockChain()
-
-PurseCoin.createNewTransaction("asdasd","wwewe","wewew")
-
-server = axios.create({
-  baseURL: host,
-  responseType: 'json',
-  headers: {
-    Accept:'application/json',
-    "Content-Type": 'application/json',
-  }
-})
-
-const initServer = () => {
-  
-  let app = express()
-
-  app.use(bodyParser.json())
-  
-  app.post('/transaction', (req, res) => {
-    const {transaction} = req.body
-    PurseCoin.addToPendingTransaction(transaction)
-    console.log(PurseCoin.pendingTransactions)
-    res.send({
-      message: 'New Transaction added'
-    })
-  })
-
-
-  app.post('/transaction/broadcast', (req, res) => {
-    
-    const {sender, recipient, value} = req.body
-    const transaction = PurseCoin.createNewTransaction(sender,recipient, value)
-    PurseCoin.addToPendingTransaction(transaction)
-
-    console.log("this is my pending transactions: ",PurseCoin.pendingTransactions)
-
-    let broadcastTransactionPromise = []
-
-    PurseCoin.nodes.map(node => {
-      const url = `${node}/transaction`
-      const promise = axios.post(url, {transaction})
-      broadcastTransactionPromise.push(promise)
-    })
-
-    Promise.all(broadcastTransactionPromise).then(response => {
-      res.send({
-        message: 'Transaction has been broadcast'
-      })
-    }).catch(err => {
-      res.status(400)
-      res.send({
-        error: "Fail to broadcast transaction"
-      })
-    })
-
-  })
-
+const network = function(app, axios, PurseCoin) {
   app.post('/network/broadcast', (req, res) => {
 
     const newNode = req.body.newNode
@@ -127,7 +61,7 @@ const initServer = () => {
   app.post('/network/bulk', (req, res) => {
     const {nodes, pendingTransactions} = req.body
     PurseCoin.nodes = [...PurseCoin.nodes, ...nodes].filter(node => node !== PurseCoin.currentNode)
-    PurseCoin.pendingTransactions = pendingTransactions
+    PurseCoin.pendingTransactions = [...PurseCoin.pendingTransactions, ...pendingTransactions]
     console.log("pending: "+pendingTransactions)
     console.log("CURRENT NODES: ", PurseCoin.nodes)
     console.log("PENDING TRANSACTIONS: ", PurseCoin.pendingTransactions)
@@ -135,15 +69,7 @@ const initServer = () => {
       message:  'Decentralized node'
     })
   })
-
-  app.listen(port, () => {
-    console.log(`Listening to port ${host}`)
-  })
 }
 
-if(typeof process.env.PORT === 'undefined') {
-  console.log('Port must be set, e.g PORT=3000 node network.js')
-  return
-} else {
-  initServer()
-}
+
+module.exports = network
