@@ -7,6 +7,7 @@ const BlockChain = require('./src/blockchain')
 const miner = require('./src/api/miner')
 const network = require('./src/api/network')
 const transaction = require('./src/api/transaction')
+const block = require('./src/api/block')
 //Configs
 const port = parseInt(process.env.PORT)
 const address = process.env.ADDRESS || 'localhost'
@@ -25,10 +26,12 @@ const initServer = () => {
   miner(app, axios, PurseCoin)
   network(app, axios, PurseCoin)
   transaction(app, axios, PurseCoin)
-  
+  block(app, axios, PurseCoin)
+
   app.listen(port, () => {
     console.log(`Listening to port ${host}`)
   })
+  
 }
 
 if(typeof process.env.PORT === 'undefined') {
