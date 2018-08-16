@@ -7,7 +7,6 @@ const BlockChain = require('./src/blockchain')
 const miner = require('./src/api/miner')
 const network = require('./src/api/network')
 const transaction = require('./src/api/transaction')
-const BlockLib = require('./src/block')
 //Configs
 const port = parseInt(process.env.PORT)
 const address = process.env.ADDRESS || 'localhost'
@@ -15,7 +14,7 @@ const host = `http://${address}:${port}/`
 
 //Blockchain
 const PurseCoin = new BlockChain()
-PurseCoin.chain.push(BlockLib.genesisBlock())
+PurseCoin.chain.push(PurseCoin.genesisBlock())
 
 const initServer = () => {
   
