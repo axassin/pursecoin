@@ -3,16 +3,11 @@ const block = function(app, axios, PurseCoin) {
 
     app.post('/block/broadcast', (req, res) => {
         const {minedBlock} = req.body
-        const lastBlock  = PurseCoin.getLatestBlock()
-        const validPrevHash = lastBlock.hash === minedBlock.previousHash
-        const validIndex = lastBlock.index + 1 === minedBlock.index
-        const validHash = PurseCoin.calculateHash(lastBlock.hash, minedBlock.timestamp, minedBlock.nonce) === minedBlock.hash
 
         let response = {
             message: "Block Added"
         }
-
-        if(validHash && validPrevHash && validIndex) {
+        if(PurseCoin.isValidBlock(minedBlock)) {
             PurseCoin.registerBlock(minedBlock)
             PurseCoin.removeTxsFromPendingTxs(minedBlock.transactions)
             console.log("MINED BLOCK")

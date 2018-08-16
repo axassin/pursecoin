@@ -126,4 +126,14 @@ Blockchain.prototype.removeTxsFromPendingTxs = function(txs) {
   return Object.keys(this.pendingTransactions).length
 }
 
+Blockchain.prototype.isValidBlock = function(minedBlock) {
+
+    const lastBlock  = this.getLatestBlock()
+    const validPrevHash = lastBlock.hash === minedBlock.previousHash
+    const validIndex = lastBlock.index + 1 === minedBlock.index
+    const validHash = this.calculateHash(lastBlock.hash, minedBlock.timestamp, minedBlock.nonce) === minedBlock.hash
+
+    return validHash && validPrevHash && validIndex
+}
+
 module.exports = Blockchain
