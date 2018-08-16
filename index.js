@@ -31,7 +31,9 @@ const initServer = () => {
 }
 
 if(typeof process.env.PORT === 'undefined') {
-  console.log('Port must be set, e.g PORT=3000 node network.js')
+  console.log('Port must be set to')
+  console.log('Linux: PORT=3000 ADDRESS=192.168.254.103 node index.js')
+  console.log('Windows: set PORT=3000 && set ADDRESS=192.168.254.103 && node index.js')
   return
 } else {
   initServer()
