@@ -6,6 +6,7 @@ function Blockchain() {
   this.currentNode = `http://${process.env.ADDRESS || 'localhost'}:${parseInt(process.env.PORT)}`
   this.nodes = []
   this.pendingTransactions =  []
+  this.chain = []
 }
 
 Blockchain.prototype.createNewTransaction = function(sender, recipient, value) {

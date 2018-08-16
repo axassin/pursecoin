@@ -1,11 +1,15 @@
 const network = function(app, axios, PurseCoin) {
+
+  //broadcast the new node to all connected nodes
   app.post('/network/broadcast', (req, res) => {
 
     const newNode = req.body.newNode
-
+    //check if new node doesn't exist in current nodes
     if(PurseCoin.nodes.indexOf(newNode) < 0 ) {
       PurseCoin.nodes.push(newNode)
+
       console.log(PurseCoin.nodes)
+
       let nodePromises = []
       PurseCoin.nodes.map(node => {
        if(node !== newNode) {
@@ -46,6 +50,7 @@ const network = function(app, axios, PurseCoin) {
     }
   })
 
+  //register node
   app.post('/network/register', (req, res) => {
     const {newNode} = req.body
 
@@ -58,8 +63,10 @@ const network = function(app, axios, PurseCoin) {
     }
   })
 
+  //register all the nodes of the connected node
   app.post('/network/bulk', (req, res) => {
     const {nodes, pendingTransactions} = req.body
+    console.log("REQUEST: ",pendingTransactions)
     PurseCoin.nodes = [...PurseCoin.nodes, ...nodes].filter(node => node !== PurseCoin.currentNode)
     PurseCoin.pendingTransactions = [...PurseCoin.pendingTransactions, ...pendingTransactions]
     console.log("pending: "+pendingTransactions)
