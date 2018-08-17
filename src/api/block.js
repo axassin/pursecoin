@@ -9,9 +9,7 @@ const block = function(app, axios, PurseCoin) {
         }
         if(PurseCoin.isValidBlock(minedBlock)) {
             PurseCoin.registerBlock(minedBlock)
-            PurseCoin.removeTxsFromPendingTxs(minedBlock.transactions)
-            console.log("MINED BLOCK")
-            console.log(minedBlock)
+            PurseCoin.removeTxsFromPendingTxs(minedBlock.data)
             res.send(response)
             return
         } else {

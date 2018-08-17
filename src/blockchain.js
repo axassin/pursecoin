@@ -7,7 +7,6 @@ function Blockchain() {
   this.currentNode = `http://${process.env.ADDRESS || 'localhost'}:${parseInt(process.env.PORT)}`
   this.nodes = []
   this.pendingTransactions =  {}
-  this.miningTransactions = []
   this.chain = []
 
 }
@@ -40,26 +39,38 @@ Blockchain.prototype.calculateHash = function(previousHash, timestamp, nonce) {
 
 Blockchain.prototype.genesisBlock = function() {
 
-  transactions = [{
+  data = {
+    "0":{
     recipient: 0,
     sender: 0,
-    value: 0 }]
+    value: 0 
+    }
+  }
 
-  return this.createNewBlock(0, "0","0",0, transactions, 0,0,3)
+  return this.createNewBlock(0, "0","0",0, data, 0,0,3)
 }
 
-Blockchain.prototype.createNewBlock = function(index, previousHash, hash, timestamp,transactions,nonce,minerAddress, difficulty = 3) {
+Blockchain.prototype.createNewBlock = function(index,
+                                                 previousHash,
+                                                 hash,
+                                                 timestamp,
+                                                 data,
+                                                 nonce,
+                                                 minerAddress,
+                                                 difficulty = 3) {
   
   const block = {
-    index, previousHash, hash, timestamp,transactions,nonce,minerAddress, difficulty
+    index, previousHash, hash, timestamp,data,nonce,
+    minerAddress, difficulty
   }
 
   return block
 }
 
-Blockchain.prototype.mineBlock = function(transactions, minerAddress) {
+Blockchain.prototype.mineBlock = function(minerAddress) {
 
   const { index, difficulty, hash } = this.getLatestBlock()
+  const transactions = this.pendingTransactions
   let nextIndex = index + 1
   let nonce = 0
   let nextTimestamp = new Date().getTime() / 1000
@@ -108,20 +119,19 @@ Blockchain.prototype.bulkNodes = function(nodes) {
 Blockchain.prototype.registerBlock = function(block) {
 
   this.chain.push(block)
-  console.log(this.chain)
   return this.chain.length
 }
 
 Blockchain.prototype.removeTxsFromPendingTxs = function(txs) {
 
-  Object.keys(txs).map(tx => {
-    if(this.pendingTransactions[tx] !== undefined) {
-      delete this.pendingTransactions[tx]
+  let data = {}
+  Object.keys(this.pendingTransactions).map(ptx => {
+    if(!txs[ptx]) {
+      data[ptx] = this.pendingTransactions[ptx]
     }
   })
 
-  console.log("CURRENT PENDING TRANSACTIONS:")
-  console.log(this.pendingTransactions)
+  this.pendingTransactions = data
 
   return Object.keys(this.pendingTransactions).length
 }
