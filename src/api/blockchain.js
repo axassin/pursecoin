@@ -4,6 +4,28 @@ const blockchain = function(app, axios, PurseCoin) {
       blockchain: PurseCoin
     })
   })
+
+  app.get('/blockchain/concensus', (_req, res) => {
+    let blockchainsReponse = []
+
+    if(PurseCoin.nodes.length > 0) {
+      PurseCoin.nodes.map(node => {
+        const url = `${node}/blockchain`
+        blockchainsReponse.push(axios.get(url))
+      })
+      Promise.all(blockchainsReponse).then(response => {
+        // console.log(response[0].data.blockchain)
+        PurseCoin.concensus(response)
+        res.send({
+          message: "Concensus"
+        })
+      })
+    } else {
+      res.send({
+        error: "No connected nodes"
+      })
+    }
+  })
 }
 
 module.exports = blockchain

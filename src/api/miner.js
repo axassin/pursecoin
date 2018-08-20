@@ -16,20 +16,16 @@ const miner = function(app, axios, PurseCoin) {
               submitMinedBlockPromise.push(axios.post(`${node}/block/broadcast`, {minedBlock}))
             }
           })
-          
           Promise.all(submitMinedBlockPromise).then(response => {
             res.send({
-              message: "Broadcast Block mined"
+              message: "Broadcast mined block"
             })
            })
         } else {
-          console.log("BLOCK IS ALREADY MINED")
+          res.send({
+            error: "Block is already mined"
+          })
         }
-
-        res.send({
-          error: "Block is already mined"
-        })
-       
      }).catch(err => {
        console.log("MINING ERROR")
        console.log(err)

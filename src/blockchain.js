@@ -2,12 +2,14 @@
 const uuid = require('uuid/v1')
 const CryptoJS = require('crypto-js')
 
-function Blockchain() {
+const argNode = `http://${process.env.ADDRESS || 'localhost'}:${parseInt(process.env.PORT)}`
 
-  this.currentNode = `http://${process.env.ADDRESS || 'localhost'}:${parseInt(process.env.PORT)}`
-  this.nodes = []
-  this.pendingTransactions =  {}
-  this.chain = []
+function Blockchain(currentNode = argNode, nodes = [], pendingTransactions = {}, chain = []) {
+
+  this.currentNode = currentNode
+  this.nodes = nodes
+  this.pendingTransactions =  pendingTransactions
+  this.chain = chain
 
 }
 
@@ -47,7 +49,7 @@ Blockchain.prototype.genesisBlock = function() {
     }
   }
 
-  return this.createNewBlock(0, "0","0",0, data, 0,0,3)
+  return this.createNewBlock(0, "0","0",0, data, 0,0,4)
 }
 
 Blockchain.prototype.createNewBlock = function(index,
@@ -57,7 +59,7 @@ Blockchain.prototype.createNewBlock = function(index,
                                                  data,
                                                  nonce,
                                                  minerAddress,
-                                                 difficulty = 3) {
+                                                 difficulty = 4) {
   
   const block = {
     index, previousHash, hash, timestamp,data,nonce,
@@ -142,8 +144,52 @@ Blockchain.prototype.isValidBlock = function(minedBlock) {
     const validPrevHash = lastBlock.hash === minedBlock.previousHash
     const validIndex = lastBlock.index + 1 === minedBlock.index
     const validHash = this.calculateHash(lastBlock.hash, minedBlock.timestamp, minedBlock.nonce) === minedBlock.hash
-
     return validHash && validPrevHash && validIndex
 }
+
+Blockchain.prototype.isValidChain = function(chain) {
+  for (let i = 1; i < chain.length; i++) {
+    let currentBlock = chain[i]
+    let prevBlock = chain[i - 1]
+    const prevHash = currentBlock.previousHash === prevBlock.hash
+    if(!prevHash) {
+      return false
+    }
+  }
+
+  return true
+}
+
+Blockchain.prototype.concensus = function(promiseBlockchains) {
+  let maxChainLength = this.chain.length
+  let newChain = null
+  let newPendingTransactions = null
+  promiseBlockchains.map(response => {
+    const bc = response.data.blockchain
+    bcChainLength = bc.chain.length
+    if(bcChainLength > maxChainLength) {
+      newChain = bc.chain
+      newPendingTransactions = bc.pendingTransactions
+    }
+  })
+  console.log('====================================');
+  console.log(newChain);
+  console.log('====================================');
+  console.log('====================================');
+  console.log(newPendingTransactions);
+  console.log('====================================');
+  console.log('====================================');
+  console.log(this.isValidChain(newChain));
+  console.log('====================================');
+  if(newChain && newPendingTransactions && this.isValidChain(newChain)) {
+    this.chain = newChain
+    this.pendingTransactions = newPendingTransactions
+    console.log('====================================');
+    console.log("CHAIN AND TRANSACTION HAS BEEN REPLACED");
+    console.log('====================================');
+  }
+}
+
+
 
 module.exports = Blockchain

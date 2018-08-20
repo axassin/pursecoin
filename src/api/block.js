@@ -7,6 +7,7 @@ const block = function(app, axios, PurseCoin) {
         let response = {
             message: "Block Added"
         }
+        
         if(PurseCoin.isValidBlock(minedBlock)) {
             PurseCoin.registerBlock(minedBlock)
             PurseCoin.removeTxsFromPendingTxs(minedBlock.data)
@@ -22,6 +23,12 @@ const block = function(app, axios, PurseCoin) {
         
         res.send(response)
         return
+    })
+
+    app.get('/block/chain', (_req, res) => {
+        res.send({
+            chain: PurseCoin.chain
+        })
     })
 }
 
