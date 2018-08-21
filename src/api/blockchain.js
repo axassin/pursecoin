@@ -17,7 +17,7 @@ const blockchain = function(app, axios, PurseCoin) {
         // console.log(response[0].data.blockchain)
         PurseCoin.concensus(response)
         res.send({
-          message: "Concensus"
+          message: "Concensus success"
         })
       })
     } else {

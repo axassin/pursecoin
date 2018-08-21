@@ -170,6 +170,7 @@ Blockchain.prototype.concensus = function(promiseBlockchains) {
     if(bcChainLength > maxChainLength) {
       newChain = bc.chain
       newPendingTransactions = bc.pendingTransactions
+      maxChainLength = bcChainLength
     }
   })
   console.log('====================================');
