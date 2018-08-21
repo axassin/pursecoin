@@ -6,7 +6,7 @@ const SHA256 = require('js-sha256')
 const ripemd160 = require('ripemd160')
 const fs = require('fs')
 
-const walletDirectory = "../wallets/"
+const walletDirectory = "wallets/"
 
 function Wallet() {
 
@@ -73,14 +73,14 @@ Wallet.prototype.generateAddressfromPubKey = function(publicKey){
 }
 
 Wallet.prototype.createRandomKeyPair = function() {
-  let privateKey = generateRandomPrivateKey()
-  let publicKey = generatePublicKeyFromPrivateKey(privateKey)
-  let publicAddress = generateAddressfromPubKey(publicKey)
+  let privateKey = this.generateRandomPrivateKey()
+  let publicKey = this.generatePublicKeyFromPrivateKey(privateKey)
+  let publicAddress = this.generateAddressfromPubKey(publicKey)
   return {privateKey, publicKey, publicAddress}
 }
 
 Wallet.prototype.generateWallet = function(passphrase){
-  let {privateKey, publicKey, publicAddress} = createRandomKeyPair()
+  let {privateKey, publicKey, publicAddress} = this.createRandomKeyPair()
   //Encrypt them
   // let namePhrase = CryptoJS.AES.encrypt(filename+passphrase, passphrase).toString()
   // let data = CryptoJS.AES.encrypt(privateKey+"|"+publicKey+"|"+publicAddress, passphrase).toString()
@@ -111,40 +111,54 @@ Wallet.prototype.retrieveWallet = function(filename, passphrase){
   //retrieve file with filename $name
   // var bytes  = CryptoJS.AES.decrypt(ciphertext.toString(), 'secret key 123');
   // var plaintext = bytes.toString(CryptoJS.enc.Utf8);
-  fs.readFile(walletDirectory+filename, "utf8", async(err, file) =>{
-    if (err){
-      console.log("Failed to read file")
-      return
-    }
+  
+  // let privateKey, publicKey, publicAddress
 
-    let initialDecrypt
+  let file = fs.readFileSync(walletDirectory+filename, "utf-8")
+  let initialDecrypt
+  try{
+    initialDecrypt = CryptoJS.AES.decrypt(file, passphrase).toString(CryptoJS.enc.Utf8).split(",")
+  }catch(err){
+    console.log("Wrong filename or passphrase")
+    return
+  }
 
-    try{
-      initialDecrypt = CryptoJS.AES.decrypt(file, passphrase).toString(CryptoJS.enc.Utf8).split(",")
-    }catch(err){
-      console.log("Wrong filename or passphrase")
-      return
-    }
+  let [privateKey, publicKey, publicAddress] = initialDecrypt[1].split("|")
 
-    let [privateKey, publicKey, publicAddress] = initialDecrypt[1].split("|")
+  return {privateKey, publicKey, publicAddress}
 
-    console.log("Private Key: ", privateKey)
-    console.log("Public Key: ", publicKey)
-    console.log("Public Address: ", publicAddress)
-  })
+  // fs.readFileSync(walletDirectory+filename, "utf-8", async(err, file) =>{
+  //   if (err){
+  //     console.log("Failed to read file")
+  //     return
+  //   }
+
+  //   let initialDecrypt
+
+  //   try{
+  //     initialDecrypt = CryptoJS.AES.decrypt(file, passphrase).toString(CryptoJS.enc.Utf8).split(",")
+  //   }catch(err){
+  //     console.log("Wrong filename or passphrase")
+  //     return
+  //   }
+
+  //   let [privateKey, publicKey, publicAddress] = initialDecrypt[1].split("|")
+
+  //   console.log("Private Key: ", privateKey)
+  //   console.log("Public Key: ", publicKey)
+  //   console.log("Public Address: ", publicAddress)
+  //   return {privateKey, publicKey, publicAddress}
+  // })
 }
 
 Wallet.prototype.signTransaction = function(wallet, toAddress, value, transaction){
 
-    let transactions = {
-        nonce:0,
-        gasLimit:21000,
-        gasPrice:ethers.utils.bigNumberify("2000000000"),
-        to:toAddress,
-        value:ethers.utils.parseEther(value),
-        data:"0x"
-    }
-    return wallet.sign(transaction)
+  return
+}
+
+Wallet.prototype.verifyTransaction = function(){
+
+  return
 }
 
 module.exports = Wallet
