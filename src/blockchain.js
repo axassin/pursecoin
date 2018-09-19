@@ -1,7 +1,7 @@
 
 const uuid = require('uuid/v1')
 const CryptoJS = require('crypto-js')
-
+const Transaction = require('./transaction')
 const argNode = `http://${process.env.ADDRESS || 'localhost'}:${parseInt(process.env.PORT)}`
 
 function Blockchain(currentNode = argNode, nodes = [], pendingTransactions = {}, chain = []) {
@@ -53,16 +53,17 @@ Blockchain.prototype.genesisBlock = function() {
 }
 
 Blockchain.prototype.createNewBlock = function(index,
-                                                 previousHash,
-                                                 hash,
-                                                 timestamp,
-                                                 data,
-                                                 nonce,
-                                                 minerAddress,
-                                                 difficulty = 4) {
+                                                transactions,
+                                                difficulty,
+                                                previousBlockHash,
+                                                minedBy, 
+                                                blockDataHash,
+                                                nonce,
+                                                dateCreated,
+                                                blockHash) {
   
   const block = {
-    index, previousHash, hash, timestamp,data,nonce,
+    index, previousBlockHash, hash, timestamp,data,nonce,
     minerAddress, difficulty
   }
 
@@ -164,7 +165,7 @@ Blockchain.prototype.concensus = function(promiseBlockchains) {
   let maxChainLength = this.chain.length
   let newChain = null
   let newPendingTransactions = null
-  promiseBlockchains.map(response => {
+  promiseBlockchains.map(response => {  
     const bc = response.data.blockchain
     bcChainLength = bc.chain.length
     if(bcChainLength > maxChainLength) {
@@ -189,6 +190,22 @@ Blockchain.prototype.concensus = function(promiseBlockchains) {
     console.log("CHAIN AND TRANSACTION HAS BEEN REPLACED");
     console.log('====================================');
   }
+}
+
+Blockchain.prototype.addTransaction = function(txnData) {
+    let txn = new Transaction(
+        txnData.from,
+        txnData.to,
+        txnData.value,
+        txnData.fee,
+        txnData.dateCreated,
+        txnData.data,
+        txnData.senderPubKey,
+        txnData.transactionDataHash,
+        txnData.senderSignature,
+        txnData.minedInBlockIndex,
+        txnData.transferSuccessful
+    )
 }
 
 
