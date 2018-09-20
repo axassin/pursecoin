@@ -100,8 +100,6 @@ Blockchain.prototype.mineBlock = function(minerAddress) {
     resolve(minedBlock)
   })
 
-
-  console.log("END OF MINING")
   return mining
 }
 
@@ -122,6 +120,7 @@ Blockchain.prototype.bulkNodes = function(nodes) {
 Blockchain.prototype.registerBlock = function(block) {
 
   this.chain.push(block)
+
   return this.chain.length
 }
 
@@ -174,21 +173,9 @@ Blockchain.prototype.concensus = function(promiseBlockchains) {
       maxChainLength = bcChainLength
     }
   })
-  console.log('====================================');
-  console.log(newChain);
-  console.log('====================================');
-  console.log('====================================');
-  console.log(newPendingTransactions);
-  console.log('====================================');
-  console.log('====================================');
-  console.log(this.isValidChain(newChain));
-  console.log('====================================');
   if(newChain && newPendingTransactions && this.isValidChain(newChain)) {
     this.chain = newChain
     this.pendingTransactions = newPendingTransactions
-    console.log('====================================');
-    console.log("CHAIN AND TRANSACTION HAS BEEN REPLACED");
-    console.log('====================================');
   }
 }
 
