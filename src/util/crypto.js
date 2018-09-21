@@ -4,7 +4,7 @@ const secp256k1 = new EC('secp256k1')
 
 
 function sha256(data) {
-    return CryptoJS.SHA256(data)
+    return CryptoJS.SHA256(data).toString()
 }
 
 function publikKeyToAddress(pubkey) {

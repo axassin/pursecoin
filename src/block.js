@@ -22,8 +22,8 @@ Block.prototype.calculateBlockDataHash = function() {
         index: this.index,
         transactions: this.transactions,
         difficulty: this.difficulty,
-        prevBlockhash
-
+        prevBlockhash: this.prevBlockHash,
+        minedBy: this.minedBy
     }
 
     const blockDataJSON = JSON.stringify(blockData)
