@@ -2,7 +2,9 @@
 const uuid = require('uuid/v1')
 const CryptoJS = require('crypto-js')
 const Transaction = require('./transaction')
+const Block = require('./block')
 const argNode = `http://${process.env.ADDRESS || 'localhost'}:${parseInt(process.env.PORT)}`
+const Config = require('./Config')
 
 function Blockchain(currentNode = argNode, nodes = [], pendingTransactions = {}, chain = []) {
 
@@ -13,18 +15,50 @@ function Blockchain(currentNode = argNode, nodes = [], pendingTransactions = {},
 
 }
 
-Blockchain.prototype.createNewTransaction = function(sender, recipient, value) {
+Blockchain.prototype.createNewTransaction = function(txnData) {
 
-  const transaction = {
-    sender, recipient, value, id: uuid()
-  }
+    let txn = new Transaction(
+        txnData.from,
+        txnData.to,
+        txnData.value,
+        txnData.fee,
+        txnData.dateCreated,
+        txnData.data,
+        txnData.senderPubKey,
+        txnData.transactionDataHash,
+        txnData.senderSignature,
+        txnData.minedInBlockIndex,
+        txnData.transferSuccessful
+    )
 
-  return transaction
+
+  return txn
+}
+
+Blockchain.prototype.getConfirmedTransactions = function() {
+    let transactions = {}
+
+    
+    this.chain.map(block => {
+        transactions = {...transactions, ...block.transactions}
+    })
+
+    return transactions
+}
+
+Blockchain.prototype.getAllTransactions = function() {
+    return {...this.getConfirmedTransactions(), ...this.pendingTransactions}
+}
+
+
+
+Blockchain.prototype.getTransactionHistory = function(transHash) {
+    return this.getAllTransactions()[transHash]
 }
 
 Blockchain.prototype.addToPendingTransaction = function(transaction) {
 
-  this.pendingTransactions[transaction.id] = transaction
+  this.pendingTransactions[transaction.transactionDataHash] = transaction
 
   return Object.keys(this.pendingTransactions).length
 }
@@ -32,6 +66,60 @@ Blockchain.prototype.addToPendingTransaction = function(transaction) {
 Blockchain.prototype.getLatestBlock = function() {
 
   return this.chain[this.chain.length - 1]
+}
+
+Blockchain.prototype.getTransactionHistory = function(address) {
+    const transactions = this.getAllTransactions()
+    const transactionByAddress = {}
+    
+    return Object.keys(transactions).filter(tnx => {
+        return transactions[tnx].to === address || transactions[tnx].from
+    }).map(tnx => transactions[tnx])
+}
+
+Blockchain.prototype.getAccountBalance = function(address) {
+    const transactions = this.getAllTransactions()
+
+    const balance = {
+        pendingBalance : 0,
+        safeBalance: 0,
+        confirmedBalance: 0
+    }
+    Object.keys(transactions).map(tnx => {
+        tnx = transactions[tnx]
+
+        let confirmTnxCount = 0
+
+        if(tnx.from === address) {
+            if(confirmTnxCount === 0 && tnx.transferSuccessful) {
+                balance.pendingBalance -= tnx.value
+            }
+            if(confirmTnxCount > 0) {
+                balance.confirmedBalance -= fee
+                if(tnx.transferSuccessful) {
+                    balance.confirmedBalance -= value
+                }
+            }
+            if(confirmTnxCount >= Config.safeConfirmCount) {
+                balance.safeBalance -= tnx.fee
+
+                if(tnx.transferSuccessful) {
+                    balance.safeBalance -= tnx.value
+                }
+            }
+        } else if(tnx.to === address) {
+            if(confirmTnxCount === 0 && tnx.transferSuccessful) {
+                balance.pendingBalance += tnx.value
+            } else if(confirmTnxCount > 0 && tnx.transferSuccessful) {
+                balance.confirmedBalance += tnx.value
+            } else if(confirmTnxCount >= Config.safeConfirmCount && tnx.transferSuccessful) {
+                balance.safeBalance += tnx.value
+            }
+
+        }
+    })
+
+    return balance
 }
 
 Blockchain.prototype.calculateHash = function(previousHash, timestamp, nonce) {
@@ -178,23 +266,5 @@ Blockchain.prototype.concensus = function(promiseBlockchains) {
     this.pendingTransactions = newPendingTransactions
   }
 }
-
-Blockchain.prototype.addTransaction = function(txnData) {
-    let txn = new Transaction(
-        txnData.from,
-        txnData.to,
-        txnData.value,
-        txnData.fee,
-        txnData.dateCreated,
-        txnData.data,
-        txnData.senderPubKey,
-        txnData.transactionDataHash,
-        txnData.senderSignature,
-        txnData.minedInBlockIndex,
-        txnData.transferSuccessful
-    )
-}
-
-
 
 module.exports = Blockchain

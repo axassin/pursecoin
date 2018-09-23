@@ -50,5 +50,6 @@ module.exports = {
     nullSignature,
     genesisDate,
     genesisTransaction,
-    genesisBlock
+    genesisBlock,
+    safeConfirmCount: 3
 }
