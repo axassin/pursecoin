@@ -14,10 +14,13 @@ const wallet = require('./src/api/wallet')
 const port = parseInt(process.env.PORT)
 const address = process.env.ADDRESS || 'localhost'
 const host = `http://${address}:${port}/`
+const {
+    genesisBlock
+} = require('./src/Config')
 
 //Blockchain
 const PurseCoin = new BlockChain()
-PurseCoin.chain.push(PurseCoin.genesisBlock())
+PurseCoin.chain.push(genesisBlock)
 
 const initServer = () => {
   

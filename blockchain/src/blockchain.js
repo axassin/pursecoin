@@ -12,12 +12,11 @@ function Blockchain(currentNode = argNode, nodes = [], pendingTransactions = {},
   this.nodes = nodes
   this.pendingTransactions =  pendingTransactions
   this.chain = chain
-
 }
 
 Blockchain.prototype.createNewTransaction = function(txnData) {
 
-    let txn = new Transaction(
+    const txn = new Transaction(
         txnData.from,
         txnData.to,
         txnData.value,
@@ -25,20 +24,35 @@ Blockchain.prototype.createNewTransaction = function(txnData) {
         txnData.dateCreated,
         txnData.data,
         txnData.senderPubKey,
-        txnData.transactionDataHash,
-        txnData.senderSignature,
-        txnData.minedInBlockIndex,
-        txnData.transferSuccessful
+        txnData.senderSignature
     )
 
+    if(this.getTxnByDataHash(txn.transactionDataHash)) {
+        return {
+            error: `Duplicate Transactions: ${txn.transactionDataHash}`
+        }
+    }
 
-  return txn
+    if( !txn.isValidSignature ){
+        return {
+            error: `Invalid Signature: ${txn.senderSignature}`
+        }
+    }
+
+    if(this.getAccountBalance(txn.from) < txn.fee + txn.value) {
+        return {
+            error: `Insufficient Balance from address: ${txn.from}`
+        }
+    }
+
+    this.addToPendingTransaction(txn)
+
+    return txn
 }
 
 Blockchain.prototype.getConfirmedTransactions = function() {
     let transactions = {}
 
-    
     this.chain.map(block => {
         transactions = {...transactions, ...block.transactions}
     })
@@ -46,13 +60,29 @@ Blockchain.prototype.getConfirmedTransactions = function() {
     return transactions
 }
 
+Blockchain.prototype.calculateConfirmedBalance = function() {
+    const transactions  = this.getConfirmedTransactions()
+    const balances = {}
+
+    Object.keys(transactions).map(tnx => {
+        const txn = transactions[tnx]
+        balances[txn.from] = balances[txn.from] || 0
+        balances[txn.to] = balances[tnx.to] || 0
+        balances[txn.from] -= txn.fee
+        if(txn.transferSuccessful) {
+            balances[txn.from] -= txn.value
+            balances[txn.to] += txn.value
+        }
+    })
+
+    return balances
+}
+
 Blockchain.prototype.getAllTransactions = function() {
     return {...this.getConfirmedTransactions(), ...this.pendingTransactions}
 }
 
-
-
-Blockchain.prototype.getTransactionHistory = function(transHash) {
+Blockchain.prototype.getTxnByDataHash = function(transHash) {
     return this.getAllTransactions()[transHash]
 }
 
@@ -68,7 +98,7 @@ Blockchain.prototype.getLatestBlock = function() {
   return this.chain[this.chain.length - 1]
 }
 
-Blockchain.prototype.getTransactionHistory = function(address) {
+Blockchain.prototype.getTxnHistory = function(address) {
     const transactions = this.getAllTransactions()
     const transactionByAddress = {}
     
@@ -150,12 +180,12 @@ Blockchain.prototype.createNewBlock = function(index,
                                                 dateCreated,
                                                 blockHash) {
   
-  const block = {
-    index, previousBlockHash, hash, timestamp,data,nonce,
-    minerAddress, difficulty
-  }
+//   const block = {
+//     index, previousBlockHash, blockDataHash, timestamp,data,nonce,
+//     minerAddress, difficulty
+//   }
 
-  return block
+//   return block
 }
 
 Blockchain.prototype.mineBlock = function(minerAddress) {
@@ -212,11 +242,11 @@ Blockchain.prototype.registerBlock = function(block) {
   return this.chain.length
 }
 
-Blockchain.prototype.removeTxsFromPendingTxs = function(txs) {
+Blockchain.prototype.removePendingTxn = function(tnx) {
 
   let data = {}
   Object.keys(this.pendingTransactions).map(ptx => {
-    if(!txs[ptx]) {
+    if(!tnx[ptx]) {
       data[ptx] = this.pendingTransactions[ptx]
     }
   })

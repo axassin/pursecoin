@@ -2,7 +2,7 @@ const CryptoUtils = require('./util/crypto')
 
 
 
-function Transaction(from, to, value, fee, dateCreated, data, senderPubKey, transactionDataHash, senderSignature, minedInBlockIndex, transferSuccessful) {
+function Transaction(from, to, value, fee, dateCreated, data, senderPubKey, senderSignature, minedInBlockIndex, transferSuccessful) {
     this.from = from
     this.to = to
     this.value = value
@@ -10,10 +10,11 @@ function Transaction(from, to, value, fee, dateCreated, data, senderPubKey, tran
     this.dateCreated = dateCreated
     this.data = data
     this.senderPubKey = senderPubKey
-    this.transactionDataHash = transactionDataHash
     this.senderSignature = senderSignature
     this.minedInBlockIndex = minedInBlockIndex
     this.transferSuccessful = transferSuccessful
+
+    this.calculateDataHash()
 }
 
 Transaction.prototype.calculateDataHash = function() {
@@ -24,7 +25,7 @@ Transaction.prototype.calculateDataHash = function() {
         fee: this.fee,
         dateCreated: this.dateCreated,
         data: this.data,
-        senderPubKey = this.senderPubKey
+        senderPubKey: this.senderPubKey
     }
 
     let transactionJSON = JSON.stringify(transaction)
@@ -36,7 +37,7 @@ Transaction.prototype.sign = function(privateKey) {
     this.senderSignature = CryptoUtils.signData(this.transactionDataHash, privateKey)
 }
 
-Transaction.prototype.verify = function() {
+Transaction.prototype.isValidSignature = function() {
     return CryptoUtils.verifySignature(this.transactionDataHash, this.senderPubKey, this.senderSignature)
 }
 
