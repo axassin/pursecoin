@@ -11,6 +11,7 @@ const block = require('./src/api/block')
 const blockchain = require('./src/api/blockchain')
 const wallet = require('./src/api/wallet')
 const balance = require('./src/api/balance')
+const cors = require('cors')
 //Configs
 const port = parseInt(process.env.PORT)
 const address = process.env.ADDRESS || 'localhost'
@@ -28,7 +29,7 @@ const initServer = () => {
   const app = express()
 
   app.use(bodyParser.json())
-
+  app.use(cors())
   miner(app, axios, PurseCoin)
   network(app, axios, PurseCoin)
   transaction(app, axios, PurseCoin)
@@ -36,7 +37,7 @@ const initServer = () => {
   blockchain(app, axios, PurseCoin)
   wallet(app, axios, PurseCoin)
   balance(app, axios, PurseCoin)
-  
+
   app.listen(port, () => {
     console.log(`Listening to port ${host}`)
   })

@@ -1,8 +1,8 @@
 
 const block = function(app, axios, PurseCoin) {
-    app.get('/', (_req, res) => {
+    app.get('/blocks', (_req, res) => {
         res.send({
-            chain: PurseCoin.chain
+            blocks: PurseCoin.chain
         })
     })
 }
