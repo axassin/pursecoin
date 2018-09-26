@@ -5,8 +5,8 @@ const Block = require('./block')
 const argNode = `http://${process.env.ADDRESS || 'localhost'}:${parseInt(process.env.PORT)}`
 const Config = require('./Config')
 const Util = require('../src/util/blockchain')
-function Blockchain(currentNode = argNode, nodes = [], pendingTransactions = {}, chain = []) {
 
+function Blockchain(currentNode = argNode, nodes = [], pendingTransactions = {}, chain = []) {
   this.currentNode = currentNode
   this.nodes = nodes
   this.pendingTransactions =  pendingTransactions
@@ -64,10 +64,10 @@ Blockchain.prototype.getConfirmedBalances = function() {
     const transactions  = this.getConfirmedTransactions()
     const balances = {}
 
-    Object.keys(transactions).map(tnx => {
-        const txn = transactions[tnx]
+    Object.keys(transactions).map(txn => {
+        txn = transactions[txn]
         balances[txn.from] = balances[txn.from] || 0
-        balances[txn.to] = balances[tnx.to] || 0
+        balances[txn.to] = balances[txn.to] || 0
         balances[txn.from] -= txn.fee
 
         if(txn.transferSuccessful) {
@@ -171,37 +171,22 @@ Blockchain.prototype.genesisBlock = function() {
   return this.createNewBlock(0, "0","0",0, data, 0,0,4)
 }
 
-Blockchain.prototype.createNewBlock = function(index,
-                                                transactions,
-                                                difficulty,
-                                                previousBlockHash,
-                                                minedBy, 
-                                                blockDataHash,
-                                                nonce,
-                                                dateCreated,
-                                                blockHash) {
-  
-//   const block = {
-//     index, previousBlockHash, blockDataHash, timestamp,data,nonce,
-//     minerAddress, difficulty
-//   }
-
-//   return block
-}
-
 Blockchain.prototype.getNextBlockCandidate = function(minerAddress, difficulty = 4) {
+
     const nextBlockIndex = this.chain.length
-    const transactions = this.pendingTransactions
+    let transactions = this.pendingTransactions
+
     const coinbaseTxn = Config.rewardTransaction(nextBlockIndex, minerAddress)
-    const balances = this.getConfirmedBalances
+    const balances = this.getConfirmedBalances()
 
     Object.keys(transactions).map(txn => {
         txn = transactions[txn]
         balances[txn.from] = balances[txn.from] || 0
         balances[txn.to] = balances[txn.to] || 0
-
         if(balances[txn.from] >= txn.fee) {
             coinbaseTxn.minedInBlockIndex = nextBlockIndex
+            txn.minedInBlockIndex = nextBlockIndex
+
              balances[txn.from] -= txn.fee
              coinbaseTxn.value += txn.fee
 
@@ -213,13 +198,14 @@ Blockchain.prototype.getNextBlockCandidate = function(minerAddress, difficulty =
                  txn.transferSuccessful = false
              }
         } else {
-            this.removeFromPendingTxn(txn)
+            this.removeFromPendingTxn([txn])
             Util.removeObject(txn, transactions)
         }
     })
 
     coinbaseTxn.calculateDataHash()
-    transactions = {coinbaseTxn, ...transactions}
+
+    transactions[coinbaseTxn.transactionDataHash] = coinbaseTxn
 
     const latestBlock = this.getLatestBlock()
     const nextBlock = new Block(
@@ -229,6 +215,7 @@ Blockchain.prototype.getNextBlockCandidate = function(minerAddress, difficulty =
         latestBlock.blockDataHash,
         minerAddress
     )
+
 
     this.miningBlock[nextBlock.blockDataHash] = nextBlock
 
@@ -249,22 +236,68 @@ Blockchain.prototype.bulkNodes = function(nodes) {
   return this.nodes
 }
 
-Blockchain.prototype.registerBlock = function(block) {
+Blockchain.prototype.verifyMinedBlock = function(minedBlock) {
 
-  this.chain.push(block)
+    let block = this.miningBlock[minedBlock.blockDataHash]
+    const {
+        dateCreated,
+        nonce,
+        blockHash
+    } = minedBlock
+    if(!block) {
+        return {
+            error: 'Block already mined'
+        }
+    }
 
-  return this.chain.length
+    block.dateCreated = dateCreated
+    block.nonce = nonce,
+    block.calculateBlockHash()
+    if(block.blockHash !== blockHash) {
+        return {
+            error: 'Invalid blockhash'
+        }
+    }
+
+    return this.registerBlock(block)
 }
 
-Blockchain.prototype.removeFromPendingTxn = function(tnx) {
+Blockchain.prototype.registerBlock = function(block) {
+  
+    const isValidBlock = this.isValidBlock(block)
+
+    if(!isValidBlock[0]) {
+        return {
+          error: 'Block is already mined'
+        }
+    }
+
+    if(!isValidBlock[1]) {
+        return {
+            error: 'Incorrect previous block hash'
+        }
+    }
+
+    this.chain.push(block)
+
+    this.miningBlock = {}
+
+    this.removeFromPendingTxn(Object.keys(block.transactions))
+
+    return block
+}
+
+Blockchain.prototype.removeFromPendingTxn = function(txn) {
 
   const transactions = this.pendingTransactions
   let data = {}
- 
-  Object.keys(transactions).map(ptx => {
-    if(!transactions[tnx]) {
-      data[ptx] = this.pendingTransactions[ptx]
-    }
+  
+  txn.map(removeTxn => {
+    Object.keys(transactions).map(ptx => {
+        if(!transactions[removeTxn]) {
+          data[ptx] = transactions[ptx]
+        }
+      })
   })
 
   this.pendingTransactions = data
@@ -275,10 +308,10 @@ Blockchain.prototype.removeFromPendingTxn = function(tnx) {
 Blockchain.prototype.isValidBlock = function(minedBlock) {
 
     const lastBlock  = this.getLatestBlock()
-    const validPrevHash = lastBlock.hash === minedBlock.previousHash
+    const validPrevHash = lastBlock.blockDataHash === minedBlock.prevBlockHash
     const validIndex = lastBlock.index + 1 === minedBlock.index
-    const validHash = this.calculateHash(lastBlock.hash, minedBlock.timestamp, minedBlock.nonce) === minedBlock.hash
-    return validHash && validPrevHash && validIndex
+    // const validHash = this.calculateHash(lastBlock.hash, minedBlock.timestamp, minedBlock.nonce) === minedBlock.hash
+    return [validIndex, validPrevHash]
 }
 
 Blockchain.prototype.isValidChain = function(chain) {

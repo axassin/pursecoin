@@ -15,42 +15,42 @@ const genesisDate = "2018-01-01T00:00:00.000Z";
 const blockReward = 3000000
 
 const genesisTransaction = new Transaction(
-    nullAddress,
-    faucetAddress,
-    1000000000000000,
-    0,
-    genesisDate,
-    "genesis transactions",
-    nullPublicKey,
-    nullSignature,
-    0,
-    true
+    nullAddress,    //fom
+    faucetAddress,  //to
+    1000000000000000,   //value
+    0,  //fee
+    genesisDate,    //dateCreated
+    "genesis transactions", //data
+    nullPublicKey,  //senrderPubKey
+    nullSignature,  //senderSignature
+    0,  //index
+    true    //transferSuccessful
 )
 
 const genesisBlock = new Block(
-    0,
-    [genesisTransaction],
-    0,
-    undefined,
-    nullAddress,
-    undefined,
-    0,
-    genesisDate,
-    undefined
+    0,  //index
+    [genesisTransaction], //transactions
+    0,  //difficulty
+    undefined,  //prevBlockHash
+    nullAddress,  //miner address
+    undefined,  //blockDataHash
+    0,  //nonce
+    genesisDate,    //dateCreated
+    undefined //blockHash
 )
 
 const rewardTransaction = (index, minerAddress) => (
     new Transaction(
-        nullAddress,
-        minerAddress,
-        blockReward,
-        0,
-        new Date().toISOString(),
-        'coinbase tx',
-        nullPubKey,
-        nullSignature,
-        index,
-        true
+        nullAddress,    //from
+        minerAddress,   //to
+        blockReward,    //value
+        0,  //fee
+        new Date().toISOString(), //dateCreated
+        'coinbase tx', //data
+        nullPublicKey,  //publicKey
+        nullSignature,  //signature
+        index,  //index
+        true    //transferSuccessful
     )
 )
 

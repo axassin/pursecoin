@@ -55,14 +55,14 @@ const miner = function(app, axios, PurseCoin) {
         res.send(response)
     })
 
-    app.get('/mine-block/:address', (req, res) => {
+    app.get('/mine-block/address/:address', (req, res) => {
         const address = req.params.address
         const {index,
                 transactions,
                 difficulty,
                 blockDataHash} = PurseCoin.getNextBlockCandidate(address)
-
-        const coinbaseTxn = transactions[Object.keys(transactions)[0]]
+        const txnHashes = Object.keys(transactions)
+        const coinbaseTxn = transactions[txnHashes[txnHashes.length - 1]]
 
         res.send({
             index,
@@ -73,6 +73,32 @@ const miner = function(app, axios, PurseCoin) {
             blockDataHash
         })
 
+    })
+
+    app.post('/mine-block/submit', (req, res) => {
+        const {
+            blockDataHash,
+            dateCreated,
+            nonce,
+            blockHash
+        } = req.body
+
+        const minedBlock = {
+            blockDataHash,
+            dateCreated,
+            nonce,
+            blockHash
+        }
+        
+        const result = PurseCoin.verifyMinedBlock(minedBlock)
+
+        res.send(result)
+    })
+
+    app.get('/mine-block/miningBlock', (req, res) => {
+        res.send({
+            miningBlock: PurseCoin.miningBlock
+        })
     })
 }
 

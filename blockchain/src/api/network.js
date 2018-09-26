@@ -52,7 +52,7 @@ const network = function(app, axios, PurseCoin) {
 
     if(PurseCoin.nodes.indexOf(newNode) < 0 && newNode !== PurseCoin.currentNode) {
       PurseCoin.nodes.push(newNode)
-      console.log(PurseCoin.nodes)
+
       res.send({
         message: newNode + ' is connected ' 
       })
@@ -63,8 +63,7 @@ const network = function(app, axios, PurseCoin) {
     const {nodes, pendingTransactions} = req.body
     PurseCoin.bulkNodes(nodes)
     PurseCoin.bulkTransactions(pendingTransactions)
-    console.log("CURRENT NODES: ", PurseCoin.nodes)
-    console.log("PENDING TRANSACTIONS: ", PurseCoin.pendingTransactions)
+
     res.send({
       message:  'Decentralized node'
     })
