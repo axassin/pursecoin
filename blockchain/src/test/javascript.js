@@ -16,12 +16,34 @@ blocks.map(block => {
 //     return transactions[tnx].tae === 1
 // }).map(tnx => transactions[tnx]))
 
-const balance = {
-    pendingBalance: 0,
-    safeBlance: 0
+// const balance = {
+//     pendingBalance: 0,
+//     safeBlance: 0
+// }
+
+// balance.pendingBalance =2
+// balance.tae = 1
+
+// console.log(balance)
+
+const obj = {
+    '1': "asdf",
+    '2': "sdw"
 }
 
-balance.pendingBalance =2
-balance.tae = 1
+const removeObject = (ob, obs) => {
+    
+    let currObj = obs
 
-console.log(balance)
+    Object.keys(obj).map(_o => {
+        if(currObj[ob]) {
+            delete currObj[ob]
+        }
+    })
+
+    return currObj
+}
+
+
+
+console.log(removeObject('1', obj))

@@ -15,6 +15,7 @@ function Transaction(from, to, value, fee, dateCreated, data, senderPubKey, send
     this.transferSuccessful = transferSuccessful
 
     this.calculateDataHash()
+    
 }
 
 Transaction.prototype.calculateDataHash = function() {

@@ -1,7 +1,13 @@
 
-mineBlock = function(minerAddress) {
+const axios = require('axios')
+
+const miner = {}
+
+miner.mineBlock = function(minerAddress) {
 
     const { index, difficulty, hash } = this.getLatestBlock()
+
+    // console.log()
     const transactions = this.pendingTransactions
     let nextIndex = index + 1
     let nonce = 0
@@ -29,5 +35,21 @@ mineBlock = function(minerAddress) {
       resolve(minedBlock)
     })
   
-    return mining
-  }
+    // return mining
+}
+
+miner.start = function(config) {
+    const {url, minerAddress} = config
+    this.nodeUrl = url
+    this.minerAddress = minerAddress
+    
+    this.mineBlock()
+    // mineBlock(minerAddress)
+    // mineBlock(minerAddress).then(data => {
+    //     console.log
+    // })
+}
+
+module.exports = miner
+
+

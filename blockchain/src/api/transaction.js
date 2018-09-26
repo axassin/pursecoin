@@ -1,11 +1,9 @@
 const transaction = function(app, axios, PurseCoin) {
 
   app.post('/transaction', (req, res) => {
-    const {transaction} = req.body
-    PurseCoin.addToPendingTransaction(transaction)
-    res.send({
-      message: 'New Transaction added'
-    })
+    const transaction = req.body
+    const newTransaction = PurseCoin.createNewTransaction(transaction)
+    res.send(newTransaction)
   })
 
 

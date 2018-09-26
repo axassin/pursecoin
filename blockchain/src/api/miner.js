@@ -33,29 +33,47 @@ const miner = function(app, axios, PurseCoin) {
      
   })
 
-  app.post('/minded-block/broadcast', (req, res) => {
-    const {minedBlock} = req.body
+    app.post('/minded-block/broadcast', (req, res) => {
+        const {minedBlock} = req.body
 
-    let response = {
-        message: "Block Added"
-    }
-    
-    if(PurseCoin.isValidBlock(minedBlock)) {
-        PurseCoin.registerBlock(minedBlock)
-        PurseCoin.removeTxsFromPendingTxs(minedBlock.data)
+        let response = {
+            message: "Block Added"
+        }
+        
+        if(PurseCoin.isValidBlock(minedBlock)) {
+            PurseCoin.registerBlock(minedBlock)
+            PurseCoin.removeTxsFromPendingTxs(minedBlock.data)
+            res.send(response)
+        } else {
+            console.log("INVALID BLOCK")
+        }
+
+        response = {
+            error: "Invalid Block or Already mined"
+        }
+        
         res.send(response)
-        return
-    } else {
-        console.log("INVALID BLOCK")
-    }
+    })
 
-    response = {
-        error: "Invalid Block or Already mined"
-    }
-    
-    res.send(response)
-    return
-})
+    app.get('/mine-block/:address', (req, res) => {
+        const address = req.params.address
+        const {index,
+                transactions,
+                difficulty,
+                blockDataHash} = PurseCoin.getNextBlockCandidate(address)
+
+        const coinbaseTxn = transactions[Object.keys(transactions)[0]]
+
+        res.send({
+            index,
+            numberOfTransactions: transactions.length,
+            difficulty,
+            expectedReward: coinbaseTxn.value,
+            rewardAddress: coinbaseTxn.to,
+            blockDataHash
+        })
+
+    })
 }
 
 module.exports = miner

@@ -10,6 +10,7 @@ const transaction = require('./src/api/transaction')
 const block = require('./src/api/block')
 const blockchain = require('./src/api/blockchain')
 const wallet = require('./src/api/wallet')
+const balance = require('./src/api/balance')
 //Configs
 const port = parseInt(process.env.PORT)
 const address = process.env.ADDRESS || 'localhost'
@@ -34,7 +35,8 @@ const initServer = () => {
   block(app, axios, PurseCoin)
   blockchain(app, axios, PurseCoin)
   wallet(app, axios, PurseCoin)
-
+  balance(app, axios, PurseCoin)
+  
   app.listen(port, () => {
     console.log(`Listening to port ${host}`)
   })

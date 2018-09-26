@@ -10,10 +10,11 @@ class Block {
         this.difficulty = difficulty
         this.prevBlockHash = prevBlockHash
         this.minedBy = minedBy
-        this.blockDataHash = blockDataHash
         this.nonce = nonce
         this.dateCreated = dateCreated
-        this.blockHash = blockHash
+
+        this.calculateBlockDataHash()
+        this.calculateBlockHash()
     }
 }
 

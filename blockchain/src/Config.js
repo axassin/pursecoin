@@ -2,18 +2,17 @@
 const Transaction = require('./transaction')
 const Block = require('./block')
 
-const faucetPrivateKey = 'ee4dea2d90616a95439249ff9b0c7c71fba8a71a0bd5e3532595a8ab900380b0'
-const faucetPublicKey = '284e70bbaa5aeae5fe178c0d98e9699156be0ad80bea4205dea736693872a0c1'
-const faucetAddress = '8c6cd5882bfaa67749a2403c435e3998d0403757'
-
+const faucetPrivateKey = '7e4670ae70c98d24f3662c172dc510a085578b9ccc717e6c2f4e547edd960a34'
+const faucetPublicKey = 'c74a8458cd7a7e48f4b7ae6f4ae9f56c5c88c0f03e7c59cb4132b9d9d1600bba1'
+const faucetAddress = 'c3293572dbe6ebc60de4a20ed0e21446cae66b17'
 const nullAddress = '0000000000000000000000000000000000000000'
 const nullPublicKey = '0000000000000000000000000000000000000000000000000000000000000000'
 const nullSignature = [
     '000000000000000000000000000000000000000000000000000000000000000',
     '000000000000000000000000000000000000000000000000000000000000000'
 ]
-
 const genesisDate = "2018-01-01T00:00:00.000Z";
+const blockReward = 3000000
 
 const genesisTransaction = new Transaction(
     nullAddress,
@@ -23,7 +22,6 @@ const genesisTransaction = new Transaction(
     genesisDate,
     "genesis transactions",
     nullPublicKey,
-    undefined,
     nullSignature,
     0,
     true
@@ -41,6 +39,21 @@ const genesisBlock = new Block(
     undefined
 )
 
+const rewardTransaction = (index, minerAddress) => (
+    new Transaction(
+        nullAddress,
+        minerAddress,
+        blockReward,
+        0,
+        new Date().toISOString(),
+        'coinbase tx',
+        nullPubKey,
+        nullSignature,
+        index,
+        true
+    )
+)
+
 module.exports = {
     faucetPrivateKey,
     faucetPublicKey,
@@ -53,6 +66,7 @@ module.exports = {
     genesisBlock,
     safeConfirmCount: 3,
     maxTransactionFee: 10000000,
-    blockReward: 3000000,
-    maxTxnValue:1000000000000000
+    blockReward,
+    maxTxnValue:1000000000000000,
+    rewardTransaction
 }

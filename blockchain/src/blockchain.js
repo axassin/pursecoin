@@ -1,17 +1,17 @@
 
-const uuid = require('uuid/v1')
 const CryptoJS = require('crypto-js')
 const Transaction = require('./transaction')
 const Block = require('./block')
 const argNode = `http://${process.env.ADDRESS || 'localhost'}:${parseInt(process.env.PORT)}`
 const Config = require('./Config')
-
+const Util = require('../src/util/blockchain')
 function Blockchain(currentNode = argNode, nodes = [], pendingTransactions = {}, chain = []) {
 
   this.currentNode = currentNode
   this.nodes = nodes
   this.pendingTransactions =  pendingTransactions
   this.chain = chain
+  this.miningBlock = {}
 }
 
 Blockchain.prototype.createNewTransaction = function(txnData) {
@@ -33,7 +33,7 @@ Blockchain.prototype.createNewTransaction = function(txnData) {
         }
     }
 
-    if( !txn.isValidSignature ){
+    if( !txn.isValidSignature()){
         return {
             error: `Invalid Signature: ${txn.senderSignature}`
         }
@@ -60,7 +60,7 @@ Blockchain.prototype.getConfirmedTransactions = function() {
     return transactions
 }
 
-Blockchain.prototype.calculateConfirmedBalance = function() {
+Blockchain.prototype.getConfirmedBalances = function() {
     const transactions  = this.getConfirmedTransactions()
     const balances = {}
 
@@ -69,6 +69,7 @@ Blockchain.prototype.calculateConfirmedBalance = function() {
         balances[txn.from] = balances[txn.from] || 0
         balances[txn.to] = balances[tnx.to] || 0
         balances[txn.from] -= txn.fee
+
         if(txn.transferSuccessful) {
             balances[txn.from] -= txn.value
             balances[txn.to] += txn.value
@@ -188,37 +189,50 @@ Blockchain.prototype.createNewBlock = function(index,
 //   return block
 }
 
-Blockchain.prototype.mineBlock = function(minerAddress) {
+Blockchain.prototype.getNextBlockCandidate = function(minerAddress, difficulty = 4) {
+    const nextBlockIndex = this.chain.length
+    const transactions = this.pendingTransactions
+    const coinbaseTxn = Config.rewardTransaction(nextBlockIndex, minerAddress)
+    const balances = this.getConfirmedBalances
 
-  const { index, difficulty, hash } = this.getLatestBlock()
-  const transactions = this.pendingTransactions
-  let nextIndex = index + 1
-  let nonce = 0
-  let nextTimestamp = new Date().getTime() / 1000
-  let nextHash = this.calculateHash(hash, nextTimestamp, nonce)
-  const mining = new Promise((resolve, _reject) => {
+    Object.keys(transactions).map(txn => {
+        txn = transactions[txn]
+        balances[txn.from] = balances[txn.from] || 0
+        balances[txn.to] = balances[txn.to] || 0
 
-    while(nextHash.substring(0, difficulty) !== Array(difficulty + 1).join('0')) {
-      nonce++
-      nextTimestamp = new Date().getTime() / 1000
-      nextHash = this.calculateHash(hash, nextTimestamp, nonce)
-      console.log({
-        nonce
-      })
-    }
-    const minedBlock = this.createNewBlock(nextIndex, 
-                                            hash,
-                                            nextHash,
-                                            nextTimestamp,
-                                            transactions,
-                                            nonce,
-                                            minerAddress,
-                                            difficulty)
+        if(balances[txn.from] >= txn.fee) {
+            coinbaseTxn.minedInBlockIndex = nextBlockIndex
+             balances[txn.from] -= txn.fee
+             coinbaseTxn.value += txn.fee
 
-    resolve(minedBlock)
-  })
+             if(balances[txn.from] >= txn.value) {
+                 balances[txn.from] -= txn.value
+                 balances[txn.to] += txn.value
+                 txn.transferSuccessful = true
+             } else {
+                 txn.transferSuccessful = false
+             }
+        } else {
+            this.removeFromPendingTxn(txn)
+            Util.removeObject(txn, transactions)
+        }
+    })
 
-  return mining
+    coinbaseTxn.calculateDataHash()
+    transactions = {coinbaseTxn, ...transactions}
+
+    const latestBlock = this.getLatestBlock()
+    const nextBlock = new Block(
+        nextBlockIndex,
+        transactions,
+        difficulty,
+        latestBlock.blockDataHash,
+        minerAddress
+    )
+
+    this.miningBlock[nextBlock.blockDataHash] = nextBlock
+
+    return nextBlock
 }
 
 Blockchain.prototype.bulkTransactions = function(pendingTransactions) {
@@ -242,11 +256,13 @@ Blockchain.prototype.registerBlock = function(block) {
   return this.chain.length
 }
 
-Blockchain.prototype.removePendingTxn = function(tnx) {
+Blockchain.prototype.removeFromPendingTxn = function(tnx) {
 
+  const transactions = this.pendingTransactions
   let data = {}
-  Object.keys(this.pendingTransactions).map(ptx => {
-    if(!tnx[ptx]) {
+ 
+  Object.keys(transactions).map(ptx => {
+    if(!transactions[tnx]) {
       data[ptx] = this.pendingTransactions[ptx]
     }
   })
